@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import javafx.util.Pair;
 
+import org.jabref.jabfix.rule.RuleSet;
 import org.jabref.logic.importer.SearchBasedFetcher;
 import org.jabref.logic.importer.WebFetcher;
 import org.jabref.logic.importer.WebFetchers;
@@ -153,6 +154,15 @@ public class JabKitLauncher {
                                      .map(WebFetcher::getName)
                                      .filter(name -> !"Search pre-configured".equals(name))
                                      .collect(Collectors.joining(", ")));
+
+        // `jabfix` is configured by rule id, so the ids -- and what each one does -- have to be
+        // discoverable from `--help` alone.
+        commandLine.getSubcommands().get("jabfix")
+                   .getCommandSpec().usageMessage().footer("\n"
+                           + Localization.lang("The following rules are available:") + "\n"
+                           + StringUtil.alignStringTable(RuleSet.all().rules().stream()
+                                                                .map(rule -> new Pair<>(rule.id(), rule.description()))
+                                                                .toList()));
     }
 
     private static boolean hasCommandOption(CommandLine.Model.CommandSpec commandSpec, String optionName) {

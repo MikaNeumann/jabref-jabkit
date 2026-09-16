@@ -7,6 +7,7 @@
 /// @see <a href="https://devdocs.jabref.org/code-howtos/cli.html">CLI code howto</a>
 module org.jabref.jabkit {
     requires org.jabref.jablib;
+    requires org.jabref.jabfix;
 
     requires info.picocli;
     opens org.jabref.toolkit.commands;

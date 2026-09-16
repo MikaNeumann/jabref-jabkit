@@ -1,0 +1,159 @@
+package org.jabref.toolkit.commands;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import org.jabref.jabfix.JabFix;
+import org.jabref.jabfix.JabFixResult;
+import org.jabref.jabfix.rule.Finding;
+import org.jabref.jabfix.rule.RuleSet;
+import org.jabref.jabfix.rule.UnknownRuleException;
+import org.jabref.logic.importer.ParserResult;
+import org.jabref.logic.l10n.Localization;
+import org.jabref.model.entry.field.Field;
+import org.jabref.toolkit.exception.CliException;
+import org.jabref.toolkit.exception.ImportServiceException;
+import org.jabref.toolkit.service.ImportService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
+
+import static picocli.CommandLine.Command;
+import static picocli.CommandLine.Mixin;
+import static picocli.CommandLine.Option;
+import static picocli.CommandLine.ParentCommand;
+
+/// Thin CLI wrapper around [JabFix]; the rules and the formatting live in the `org.jabref.jabfix` module.
+///
+/// Exit codes follow the other checking commands: 0 = nothing to do, 1 = the library is not clean
+/// (`--check` only), 2/3 = error.
+@Command(name = "jabfix", description = "Lint and format a BibTeX library.")
+class JabFixCommand implements Callable<Integer> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JabFixCommand.class);
+
+    @ParentCommand
+    private JabKit jabKit;
+
+    @Mixin
+    private JabKit.SharedOptions sharedOptions;
+
+    @Mixin
+    private InputOption inputOption = new InputOption();
+
+    @Option(names = {"--in-place"}, description = "Write the formatted library back to the input file instead of to standard output.")
+    private boolean inPlace;
+
+    @Option(names = {"--check"}, description = "Report what is wrong without writing anything.")
+    private boolean checkOnly;
+
+    @Option(names = {"--disable"}, split = ",", paramLabel = "RULE",
+            description = "Rule to switch off. Repeatable, and accepts a comma-separated list. The available rules are listed below.")
+    private List<String> disabledRules = List.of();
+
+    @Override
+    public Integer call() throws ImportServiceException, CliException {
+        if (inPlace && checkOnly) {
+            throw new CliException("--in-place and --check are mutually exclusive",
+                    Localization.lang("Only one of --in-place and --check can be given."),
+                    CommandLine.ExitCode.USAGE);
+        }
+
+        RuleSet ruleSet = selectedRules();
+        Path inputFile = inputOption.getInputFile(jabKit.cliPreferences);
+
+        // Without --in-place or --check the formatted library itself goes to stdout, so the
+        // importer's progress chatter has to be suppressed there to keep the output pipeable.
+        boolean quiet = sharedOptions.porcelain || !(inPlace || checkOnly);
+        ParserResult parserResult = ImportService.importBibTexFile(inputFile, jabKit.cliPreferences, quiet);
+
+        JabFix jabFix = new JabFix(
+                ruleSet,
+                jabKit.cliPreferences.getFieldPreferences(),
+                jabKit.cliPreferences.getCitationKeyPatternPreferences(),
+                jabKit.entryTypesManager);
+
+        try {
+            // Only the parsed library in memory is changed here; nothing reaches disk unless
+            // --in-place says so, which is what lets --check reuse the very same run.
+            JabFixResult result = jabFix.run(parserResult.getDatabaseContext());
+
+            if (checkOnly) {
+                return check(inputFile, result);
+            }
+
+            // A rule that found something it cannot repair has to be said out loud, since it will
+            // not show up in the output the way an applied fix does.
+            report(inputFile, result.findings().stream().filter(finding -> !finding.isFixable()).toList(), System.err);
+
+            if (inPlace) {
+                return write(inputFile, result.formatted());
+            }
+
+            System.out.print(result.formatted());
+            System.out.flush();
+            return CommandLine.ExitCode.OK;
+        } catch (IOException e) {
+            System.err.println(Localization.lang("Unable to write to %0.", inPlace ? inputFile : "stdout"));
+            return CommandLine.ExitCode.SOFTWARE;
+        }
+    }
+
+    /// A misspelled rule id is a usage error, not something to pass over: leaving it unreported
+    /// would let the user believe a rule had been switched off while it kept running.
+    private RuleSet selectedRules() throws CliException {
+        try {
+            return RuleSet.all().without(disabledRules);
+        } catch (UnknownRuleException e) {
+            LOGGER.debug("Rejecting unknown rule id", e);
+            throw new CliException(e.getMessage(),
+                    Localization.lang("Unknown rule: %0. Available rules: %1",
+                            String.join(", ", e.getUnknownIds()),
+                            String.join(", ", e.getKnownIds())),
+                    CommandLine.ExitCode.USAGE);
+        }
+    }
+
+    private int check(Path inputFile, JabFixResult result) throws IOException {
+        report(inputFile, result.findings(), System.out);
+
+        // Findings alone are not the whole story: reformatting alters things no rule reports on,
+        // such as entry type capitalization, so the serialized result has to be compared as well.
+        boolean formattingDiffers = !result.formatted().equals(Files.readString(inputFile, StandardCharsets.UTF_8));
+
+        if (result.findings().isEmpty() && !formattingDiffers) {
+            if (!sharedOptions.porcelain) {
+                System.out.println(Localization.lang("'%0' is already formatted.", inputFile));
+            }
+            return CommandLine.ExitCode.OK;
+        }
+        System.out.println(Localization.lang("'%0' would be reformatted.", inputFile));
+        return 1;
+    }
+
+    private int write(Path inputFile, String formatted) throws IOException {
+        Files.writeString(inputFile, formatted, StandardCharsets.UTF_8);
+        if (!sharedOptions.porcelain) {
+            System.out.println(Localization.lang("Saved %0.", inputFile));
+        }
+        return CommandLine.ExitCode.OK;
+    }
+
+    /// Writes one line per finding, in the `file: location: message` shape editors and CI log
+    /// scrapers expect, with the rule id appended so that a reader knows what to switch off.
+    private void report(Path inputFile, List<Finding> findings, PrintStream target) {
+        for (Finding finding : findings) {
+            target.println("%s: %s: %s: %s [%s]".formatted(
+                    inputFile,
+                    finding.citationKey(),
+                    finding.field().map(Field::getName).orElse("-"),
+                    finding.message(),
+                    finding.rule().id()));
+        }
+    }
+}
