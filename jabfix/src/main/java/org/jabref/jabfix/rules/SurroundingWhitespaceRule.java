@@ -2,6 +2,8 @@ package org.jabref.jabfix.rules;
 
 import org.jabref.jabfix.rule.FieldValueRule;
 
+import org.jspecify.annotations.NullMarked;
+
 /// Strips whitespace from both ends of a field value.
 ///
 /// BibTeX ignores it, so it carries no meaning; it only makes values compare unequal that are in
@@ -9,6 +11,7 @@ import org.jabref.jabfix.rule.FieldValueRule;
 /// *inside* a value is left untouched -- there it can be deliberate.
 ///
 /// Also the smallest example of a rule: a [FieldValueRule] only states what a value should be.
+@NullMarked
 public class SurroundingWhitespaceRule extends FieldValueRule {
 
     @Override

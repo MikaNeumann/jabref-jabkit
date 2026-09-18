@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.jabref.jabfix.rules.SurroundingWhitespaceRule;
 
+import org.jspecify.annotations.NullMarked;
+
 /// The rules a JabFix run applies, in the order it applies them.
 ///
 /// This is the seam configuration hangs off: [#all] is the built-in default, [#without] switches
@@ -14,6 +16,7 @@ import org.jabref.jabfix.rules.SurroundingWhitespaceRule;
 /// Order is part of the contract, not an implementation detail. Each rule sees what the rules
 /// before it left behind, so rules that tidy a value up belong before rules that pattern-match it:
 /// otherwise the latter are defeated by noise the former would have removed.
+@NullMarked
 public class RuleSet {
 
     /// Every rule shipped with JabFix.

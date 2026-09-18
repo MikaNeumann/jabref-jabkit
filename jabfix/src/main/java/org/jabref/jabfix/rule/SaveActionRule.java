@@ -2,10 +2,13 @@ package org.jabref.jabfix.rule;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.jabref.logic.cleanup.FieldFormatterCleanup;
 import org.jabref.model.FieldChange;
 import org.jabref.model.entry.BibEntry;
+
+import org.jspecify.annotations.NullMarked;
 
 /// Runs one of JabRef's Save Actions as a [Rule].
 ///
@@ -16,6 +19,7 @@ import org.jabref.model.entry.BibEntry;
 /// requires, is up to the wrapped formatter.
 ///
 /// @param saveAction a formatter applied to a field, as configured in JabRef's Save Actions
+@NullMarked
 public record SaveActionRule(FieldFormatterCleanup saveAction) implements Rule {
 
     /// The field and the formatter's key, e.g. `pages-normalize-page-numbers`.
@@ -41,10 +45,8 @@ public record SaveActionRule(FieldFormatterCleanup saveAction) implements Rule {
 
     /// A Save Action removes a field whose value it formats to nothing, reported as a `null` new value.
     private static void apply(FieldChange change, BibEntry target) {
-        if (change.newValue() == null) {
-            target.clearField(change.field());
-        } else {
-            target.setField(change.field(), change.newValue());
-        }
+        Optional.ofNullable(change.newValue()).ifPresentOrElse(
+                newValue -> target.setField(change.field(), newValue),
+                () -> target.clearField(change.field()));
     }
 }

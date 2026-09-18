@@ -1,7 +1,7 @@
 package org.jabref.jabfix;
 
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.Reader;
 import java.util.List;
 
 import org.jabref.jabfix.rule.Finding;
@@ -91,7 +91,7 @@ class JabFixTest {
     /// values can be written as text blocks no matter which platform the test runs on.
     private JabFixResult run(RuleSet ruleSet, String bibtex) throws IOException {
         BibDatabaseContext databaseContext = new BibtexParser(importFormatPreferences)
-                .parse(new StringReader(bibtex))
+                .parse(Reader.of(bibtex))
                 .getDatabaseContext();
 
         JabFixResult result = new JabFix(

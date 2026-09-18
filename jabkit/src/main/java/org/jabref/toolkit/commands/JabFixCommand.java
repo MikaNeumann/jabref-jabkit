@@ -20,6 +20,7 @@ import org.jabref.toolkit.exception.CliException;
 import org.jabref.toolkit.exception.ImportServiceException;
 import org.jabref.toolkit.service.ImportService;
 
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -33,6 +34,7 @@ import static picocli.CommandLine.ParentCommand;
 ///
 /// Exit codes follow the other checking commands: 0 = nothing to do, 1 = the library is not clean
 /// (`--check` only), 2/3 = error.
+@NullMarked
 @Command(name = "jabfix", description = "Lint and format a BibTeX library.")
 class JabFixCommand implements Callable<Integer> {
     private static final Logger LOGGER = LoggerFactory.getLogger(JabFixCommand.class);
@@ -56,6 +58,7 @@ class JabFixCommand implements Callable<Integer> {
             description = "Rule to switch off. Repeatable, and accepts a comma-separated list. The available rules are listed below.")
     private List<String> disabledRules = List.of();
 
+    // [impl->req~jabkit.cli.jabfix~1]
     @Override
     public Integer call() throws ImportServiceException, CliException {
         if (inPlace && checkOnly) {

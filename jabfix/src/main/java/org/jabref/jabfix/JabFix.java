@@ -17,6 +17,8 @@ import org.jabref.model.database.BibDatabaseContext;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.BibEntryTypesManager;
 
+import org.jspecify.annotations.NullMarked;
+
 /// Engine behind the `jabkit jabfix` command: applies a [RuleSet] to a library and writes it out.
 ///
 /// The two halves do different jobs. The rules decide questions the `.bib` format leaves open but
@@ -31,6 +33,7 @@ import org.jabref.model.entry.BibEntryTypesManager;
 ///
 /// Preference objects are passed in individually rather than as a whole
 /// [org.jabref.logic.preferences.CliPreferences], so the engine stays usable outside the CLI.
+@NullMarked
 public class JabFix {
 
     private final RuleSet ruleSet;

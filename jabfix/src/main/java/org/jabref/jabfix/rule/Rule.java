@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.jabref.model.entry.BibEntry;
 
+import org.jspecify.annotations.NullMarked;
+
 /// One independently configurable thing JabFix has an opinion about.
 ///
 /// A rule only ever *reports*: [#scan] inspects an entry and returns a [Finding] for everything it
@@ -18,6 +20,7 @@ import org.jabref.model.entry.BibEntry;
 /// left behind. A rule must be idempotent with respect to its own output -- scanning a value it has
 /// already repaired must report nothing -- which is what lets [org.jabref.jabfix.JabFix] run every
 /// rule exactly once instead of iterating to a fixed point.
+@NullMarked
 public interface Rule {
 
     /// Stable identifier, in kebab-case. Used to switch the rule on and off in configuration and to

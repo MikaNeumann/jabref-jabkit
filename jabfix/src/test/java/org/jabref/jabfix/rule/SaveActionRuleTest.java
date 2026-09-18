@@ -65,7 +65,7 @@ class SaveActionRuleTest {
 
         List<Finding> findings = trimAll.scan(entry);
         findings.stream()
-                .filter(finding -> StandardField.TITLE.equals(finding.field().orElseThrow()))
+                .filter(finding -> finding.field().orElseThrow() == StandardField.TITLE)
                 .forEach(finding -> finding.fix().orElseThrow().applyTo(entry));
 
         assertEquals(2, findings.size());

@@ -6,6 +6,8 @@ import java.util.List;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.field.Field;
 
+import org.jspecify.annotations.NullMarked;
+
 /// Base class for the common kind of rule: one that judges a single field value at a time and can
 /// state its repair as a replacement value.
 ///
@@ -15,6 +17,7 @@ import org.jabref.model.entry.field.Field;
 ///
 /// A rule that wants to reuse one of JabRef's own field formatters can do so in a single line, by
 /// delegating [#normalize] to [org.jabref.logic.formatter.Formatter#format].
+@NullMarked
 public abstract class FieldValueRule implements Rule {
 
     @Override

@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.jabref.logic.JabRefException;
 
+import org.jspecify.annotations.NullMarked;
+
 /// Signals that a rule was selected by an id no rule carries -- in practice, a typo in a
 /// configuration or on the command line.
 ///
@@ -12,6 +14,7 @@ import org.jabref.logic.JabRefException;
 ///
 /// The message is deliberately plain English. Callers that show it to a user format their own
 /// localized text from [#getUnknownIds] and [#getKnownIds].
+@NullMarked
 public class UnknownRuleException extends JabRefException {
 
     private final List<String> unknownIds;
