@@ -16,29 +16,31 @@ JabRef has four features that judge or change how a library is written, each con
 | Check integrity   | yes     | no    | fixed checker set  |
 | Check consistency | yes     | no    | not configurable   |
 
-The goal is to turn all four into JabFix rules, configured by one file in the project (planned: `jabfix.yml`) and applied the same way by the GUI, JabKit and CI.
+The goal is to turn all four into JabFix rules, configured with the library (planned: in its metadata, plus comments above an entry for exceptions) and applied the same way by the GUI, JabKit and CI.
 Integrity checkers become report-only rules, cleanup jobs and Save Actions formatters become rules with fixes, and the consistency check becomes a library-level rule.
+Save Actions can already run as rules through `SaveActionRule`.
 
-The prototype still lacks:
+Still missing:
 
-- rules beyond one example,
+- built-in rules beyond one example,
 - library-level rules (`Rule#scan` sees one entry),
 - context for rules (file directories, abbreviation list, key patterns),
-- configuration beyond `--disable`, including rule parameters,
+- configuration beyond `--disable`, including rule parameters and per-entry exceptions,
 - GUI integration,
-- findings for changes `BibDatabaseWriter` makes on its own (Save Actions, key generation),
+- running the library's configured Save Actions as rules; `BibDatabaseWriter` still applies them on its own and without findings, as it does key generation if enabled,
 - leaving out metadata JabRef only inferred (database type, keyword separator); writing it back changes libraries that are otherwise clean.
 
-## Prototype
+## Structure
 
 ```text
 jabfix/src/main/java/org/jabref/jabfix/
 ├── JabFix.java          runs a RuleSet over a library, serializes with BibDatabaseWriter
 ├── JabFixResult.java    findings + formatted library
-├── rule/                API: Rule, Finding, Fix, FieldValueRule, RuleSet
+├── rule/                API: Rule, Finding, Fix, RuleSet, FieldValueRule, SaveActionRule
 └── rules/               one example rule: surrounding-whitespace
 ```
 
+A `FieldValueRule` only states what a field value should be; a `SaveActionRule` runs one of JabRef's Save Actions as a rule, with an id like `pages-normalize-page-numbers`.
 The CLI lives in JabKit: `jabkit jabfix [--check | --in-place] [--disable RULE,...] FILE`.
 Rules run once each, in `RuleSet` order, and must be idempotent.
 Layout is normalized by `BibDatabaseWriter`, so a library JabFix has already formatted produces no diff.
@@ -65,7 +67,7 @@ Options 1 and 2 are smaller, but keep reporting and fixing in separate code.
 - One configuration, versioned with the project.
 - Every rule can report and fix: Check integrity gains fixes, Save Actions gain a check mode.
 - Checks can be disabled individually by id.
-- Existing formatters, checkers and output writers can be wrapped rather than rewritten.
+- Existing formatters, checkers and output writers can be wrapped rather than rewritten, as `SaveActionRule` does for Save Actions.
 
 ### Cons
 
