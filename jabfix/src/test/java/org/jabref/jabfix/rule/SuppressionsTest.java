@@ -80,6 +80,22 @@ class SuppressionsTest {
                 Suppressions.parse("% jabfix-disable mynote:page-ranges"));
     }
 
+    /// Only the first colon separates, so the rest stays part of the rule id and matches no rule.
+    @Test
+    void onlyTheFirstColonSeparatesFieldFromRule() {
+        assertEquals(new Suppressions(false, Set.of(), ImmutableSetMultimap.of(StandardField.AUTHOR, "title:page-ranges")),
+                Suppressions.parse("% jabfix-disable author:title:page-ranges"));
+    }
+
+    /// A field name JabRef does not know is no error in BibTeX, so it is kept -- and then matches no
+    /// finding, which is why a misspelled one switches nothing off.
+    @Test
+    void aMisspelledFieldNameSwitchesNothingOff() {
+        Suppressions suppressions = Suppressions.parse("% jabfix-disable autor:page-ranges");
+
+        assertFalse(suppressions.suppresses("page-ranges", Optional.of(StandardField.AUTHOR)));
+    }
+
     /// Rather than dropping it, so that it is reported once ids are checked against the rules.
     @Test
     void aTokenWithAnEmptyHalfStaysOneRuleId() {

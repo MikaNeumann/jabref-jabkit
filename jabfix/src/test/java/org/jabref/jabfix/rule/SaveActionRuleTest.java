@@ -22,8 +22,8 @@ class SaveActionRuleTest {
             new FieldFormatterCleanup(StandardField.PAGES, new NormalizePagesFormatter()));
 
     @Test
-    void idNamesTheFieldAndTheFormatter() {
-        assertEquals("pages-normalize-page-numbers", normalizePages.id());
+    void idIsTheFormattersKey() {
+        assertEquals("normalize-page-numbers", normalizePages.id());
     }
 
     /// Scanning reports; only applying the finding's fix may change anything.

@@ -22,12 +22,14 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public record SaveActionRule(FieldFormatterCleanup saveAction) implements Rule {
 
-    /// The field and the formatter's key, e.g. `pages-normalize-page-numbers`.
+    /// The formatter's key, e.g. `normalize-page-numbers`.
+    ///
+    /// Which fields the Save Action covers is its own business and is left out of the id, so that
+    /// the same formatter on several fields is one rule to switch off. A single field is narrowed
+    /// down where every other rule is too, by `field:rule` in a magic comment (see [Suppressions]).
     @Override
     public String id() {
-        return (saveAction.getField().getName() + "-" + saveAction.getFormatter().getKey())
-                .replace('_', '-')
-                .toLowerCase(Locale.ROOT);
+        return saveAction.getFormatter().getKey().replace('_', '-').toLowerCase(Locale.ROOT);
     }
 
     @Override

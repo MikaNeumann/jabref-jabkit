@@ -40,7 +40,7 @@ jabfix/src/main/java/org/jabref/jabfix/
 └── rules/               one example rule: surrounding-whitespace
 ```
 
-A `FieldValueRule` only states what a field value should be; a `SaveActionRule` runs one of JabRef's Save Actions as a rule, with an id like `pages-normalize-page-numbers`.
+A `FieldValueRule` only states what a field value should be; a `SaveActionRule` runs one of JabRef's Save Actions as a rule, under the formatter's key as its id, e.g. `normalize-page-numbers`.
 A comment above an entry switches rules off for it, for one field or for all of them:
 
 ```bibtex
