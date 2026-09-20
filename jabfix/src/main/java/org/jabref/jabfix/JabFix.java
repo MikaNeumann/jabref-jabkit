@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.jabref.jabfix.rule.Finding;
+import org.jabref.jabfix.rule.MagicCommentRule;
 import org.jabref.jabfix.rule.Rule;
 import org.jabref.jabfix.rule.RuleSet;
 import org.jabref.jabfix.rule.Suppressions;
@@ -67,12 +70,19 @@ public class JabFix {
     /// repairs are applied, so a suppressed finding is neither reported nor repaired. A rule that
     /// is switched off for one field only still runs on the rest of the entry.
     ///
+    /// A [MagicCommentRule] runs ahead of the rule set, since a comment that names no rule of this
+    /// run switches nothing off and would otherwise go unnoticed.
+    ///
     /// @return the findings and the resulting `.bib` content
     public JabFixResult run(BibDatabaseContext databaseContext) throws IOException {
+        List<Rule> rules = Stream.concat(
+                Stream.of(new MagicCommentRule(Set.copyOf(ruleSet.ids()))),
+                ruleSet.rules().stream()).toList();
+
         List<Finding> findings = new ArrayList<>();
         for (BibEntry entry : databaseContext.getEntries()) {
             Suppressions suppressions = Suppressions.in(entry);
-            for (Rule rule : ruleSet.rules()) {
+            for (Rule rule : rules) {
                 List<Finding> reported = rule.scan(entry).stream()
                                              .filter(finding -> !suppressions.suppresses(rule.id(), finding.field()))
                                              .toList();

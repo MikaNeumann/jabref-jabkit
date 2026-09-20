@@ -1,5 +1,8 @@
 package org.jabref.toolkit.commands;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.jabref.logic.bibtex.FieldPreferences;
@@ -7,6 +10,7 @@ import org.jabref.toolkit.exception.CliExceptionHandler;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -70,6 +74,23 @@ class JabFixCommandTest extends AbstractJabKitTest {
 
         String findings = commandLine.getStandardOutput();
         assertTrue(findings.contains("[surrounding-whitespace]"), findings);
+    }
+
+    /// A magic comment naming no rule switches nothing off, so the check says so instead of letting
+    /// the entry be repaired as if the comment were not there.
+    @Test
+    void checkReportsAMagicCommentThatNamesNoRule(@TempDir Path tempDir) throws IOException {
+        Path library = Files.writeString(tempDir.resolve("typo.bib"), """
+                % jabfix-disable surounding-whitespace
+                @Article{key,
+                  author = {Doe, Jane},
+                }
+                """);
+
+        assertEquals(1, commandLine.executeToLog("jabfix", "--check", "-p", library.toString()));
+
+        String findings = commandLine.getStandardOutput();
+        assertTrue(findings.contains("[magic-comment]"), findings);
     }
 
     @Test

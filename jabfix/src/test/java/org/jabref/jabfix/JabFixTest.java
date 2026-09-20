@@ -175,6 +175,37 @@ class JabFixTest {
                 result.findings().stream().map(finding -> finding.field().orElseThrow().getName()).toList());
     }
 
+    /// A comment naming no rule of the run switches nothing off, which is reported rather than
+    /// passed over: the entry is repaired as if the comment were not there.
+    @Test
+    void aMagicCommentThatNamesNoRuleIsReported() throws IOException {
+        JabFixResult result = run(RuleSet.all(), """
+                % jabfix-disable surounding-whitespace
+                @ARTICLE{key,
+                author = " Doe, Jane ",
+                    YEAR="2024"
+                }
+                """);
+
+        assertEquals(List.of("magic-comment", "surrounding-whitespace"),
+                result.findings().stream().map(finding -> finding.rule().id()).toList());
+        assertTrue(result.formatted().contains("author = {Doe, Jane},"), result.formatted());
+    }
+
+    @Test
+    void aMagicCommentCanSwitchOffTheReportAboutItself() throws IOException {
+        JabFixResult result = run(RuleSet.all(), """
+                % jabfix-disable surounding-whitespace magic-comment
+                @ARTICLE{key,
+                author = " Doe, Jane ",
+                    YEAR="2024"
+                }
+                """);
+
+        assertEquals(List.of("surrounding-whitespace"),
+                result.findings().stream().map(finding -> finding.rule().id()).toList());
+    }
+
     /// Parses `bibtex` and runs JabFix over it, normalizing the line separator so that the expected
     /// values can be written as text blocks no matter which platform the test runs on.
     private JabFixResult run(RuleSet ruleSet, String bibtex) throws IOException {
