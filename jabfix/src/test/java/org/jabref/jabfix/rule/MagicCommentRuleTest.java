@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.field.StandardField;
+import org.jabref.model.entry.field.UnknownField;
 import org.jabref.model.entry.types.StandardEntryType;
 
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,31 @@ class MagicCommentRuleTest {
         assertEquals(1, findings.size());
         assertEquals("the magic comment switches off \"title:surrounding-whitespace\", which is no rule of this run",
                 findings.getFirst().message());
+    }
+
+    /// A name JabRef does not know, on an entry that does not carry it, switches nothing off.
+    @Test
+    void aFieldNeitherKnownNorPresentIsReported() {
+        List<Finding> findings = rule.scan(entryWithComment("% jabfix-disable autor:surrounding-whitespace"));
+
+        assertEquals(1, findings.size());
+        assertEquals("the magic comment names the field \"autor\", which is neither a BibTeX field nor one this entry has",
+                findings.getFirst().message());
+    }
+
+    /// It may well be meant for what is added to the entry later.
+    @Test
+    void aBibTeXFieldTheEntryDoesNotHaveIsLeftAlone() {
+        assertEquals(List.of(), rule.scan(entryWithComment("% jabfix-disable title:surrounding-whitespace")));
+    }
+
+    @Test
+    void aFieldTheEntryCarriesIsLeftAlone() {
+        BibEntry entry = new BibEntry(StandardEntryType.Article)
+                .withField(new UnknownField("mynote"), "a note")
+                .withUserComments("% jabfix-disable mynote:surrounding-whitespace");
+
+        assertEquals(List.of(), rule.scan(entry));
     }
 
     /// So that a comment meant as it is written can be left alone.

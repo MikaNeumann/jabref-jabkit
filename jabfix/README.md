@@ -26,7 +26,6 @@ Still missing:
 - library-level rules (`Rule#scan` sees one entry),
 - context for rules (file directories, abbreviation list, key patterns),
 - configuration beyond `--disable` and the comments above an entry, including rule parameters,
-- reporting a magic comment whose field the entry does not have; a misspelled field name switches nothing off and is not reported, since any field name is valid BibTeX,
 - GUI integration,
 - running the library's configured Save Actions as rules; `BibDatabaseWriter` still applies them on its own and without findings, as it does key generation if enabled. Its whitespace normalization runs on every entry a rule changed, so no comment can switch that off either,
 - leaving out metadata JabRef only inferred (database type, keyword separator); writing it back changes libraries that are otherwise clean.
@@ -51,7 +50,7 @@ A comment above an entry switches rules off for it, for one field or for all of 
 }
 ```
 
-A comment that names no rule of the run is reported by `magic-comment`, because it switches nothing off and the entry would be repaired as if it were not there.
+A comment that switches nothing off is reported by `magic-comment`, because the entry would be repaired as if it were not there: an id that names no rule of the run, or a field that is neither a BibTeX field nor one the entry carries.
 
 The CLI lives in JabKit: `jabkit jabfix [--check | --in-place] [--disable RULE,...] FILE`.
 Rules run once each, in `RuleSet` order, and must be idempotent.

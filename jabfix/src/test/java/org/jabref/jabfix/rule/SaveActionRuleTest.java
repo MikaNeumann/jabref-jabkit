@@ -47,6 +47,31 @@ class SaveActionRuleTest {
     }
 
     @Test
+    void theMessageNamesTheValueAndWhatItShouldBe() {
+        BibEntry entry = new BibEntry(StandardEntryType.Article).withField(StandardField.PAGES, "21-45");
+
+        assertEquals("\"21-45\", should be \"21--45\"", normalizePages.scan(entry).getFirst().message());
+    }
+
+    @Test
+    void theMessageOfAFieldTheSaveActionEmptiesSaysSo() {
+        SaveActionRule clearNote = new SaveActionRule(new FieldFormatterCleanup(StandardField.NOTE, new ClearFormatter()));
+        BibEntry entry = new BibEntry(StandardEntryType.Article).withField(StandardField.NOTE, "to be removed");
+
+        assertEquals("\"to be removed\", should be removed", clearNote.scan(entry).getFirst().message());
+    }
+
+    /// A field value can be as long as an abstract, while a finding is one line.
+    @Test
+    void aLongValueIsCutShortInTheMessage() {
+        SaveActionRule trimNote = new SaveActionRule(new FieldFormatterCleanup(StandardField.NOTE, new TrimWhitespaceFormatter()));
+        BibEntry entry = new BibEntry(StandardEntryType.Article).withField(StandardField.NOTE, " " + "a".repeat(80) + " ");
+
+        assertEquals("\" %s...\", should be \"%s...\"".formatted("a".repeat(56), "a".repeat(57)),
+                trimNote.scan(entry).getFirst().message());
+    }
+
+    @Test
     void aValueTheSaveActionLeavesAloneIsNotReported() {
         BibEntry entry = new BibEntry(StandardEntryType.Article).withField(StandardField.PAGES, "21--45");
 
