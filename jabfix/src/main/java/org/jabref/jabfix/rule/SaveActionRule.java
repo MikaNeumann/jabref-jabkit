@@ -24,7 +24,6 @@ import org.jspecify.annotations.NullMarked;
 public record SaveActionRule(FieldFormatterCleanup saveAction) implements Rule {
     private static final int MAX_REPORTED_VALUE_LENGTH = 60;
 
-
     /// The formatter's key, e.g. `normalize-page-numbers`.
     ///
     /// Which fields the Save Action covers is its own business and is left out of the id, so that
