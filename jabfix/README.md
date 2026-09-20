@@ -16,7 +16,7 @@ JabRef has four features that judge or change how a library is written, each con
 | Check integrity   | yes     | no    | fixed checker set  |
 | Check consistency | yes     | no    | not configurable   |
 
-The goal is to turn all four into JabFix rules, configured with the library (planned: in its metadata, plus comments above an entry for exceptions) and applied the same way by the GUI, JabKit and CI.
+The goal is to turn all four into JabFix rules, configured with the library and applied the same way by the GUI, JabKit and CI: a comment above an entry already switches rules off for it, and the settings of a whole library are planned to live in its metadata.
 Integrity checkers become report-only rules, cleanup jobs and Save Actions formatters become rules with fixes, and the consistency check becomes a library-level rule.
 Save Actions can already run as rules through `SaveActionRule`.
 
@@ -25,9 +25,9 @@ Still missing:
 - built-in rules beyond one example,
 - library-level rules (`Rule#scan` sees one entry),
 - context for rules (file directories, abbreviation list, key patterns),
-- configuration beyond `--disable`, including rule parameters and per-entry exceptions,
+- configuration beyond `--disable` and the comments above an entry, including rule parameters,
 - GUI integration,
-- running the library's configured Save Actions as rules; `BibDatabaseWriter` still applies them on its own and without findings, as it does key generation if enabled,
+- running the library's configured Save Actions as rules; `BibDatabaseWriter` still applies them on its own and without findings, as it does key generation if enabled. Its whitespace normalization runs on every entry a rule changed, so no comment can switch that off either,
 - leaving out metadata JabRef only inferred (database type, keyword separator); writing it back changes libraries that are otherwise clean.
 
 ## Structure
@@ -36,11 +36,20 @@ Still missing:
 jabfix/src/main/java/org/jabref/jabfix/
 ├── JabFix.java          runs a RuleSet over a library, serializes with BibDatabaseWriter
 ├── JabFixResult.java    findings + formatted library
-├── rule/                API: Rule, Finding, Fix, RuleSet, FieldValueRule, SaveActionRule
+├── rule/                API: Rule, Finding, Fix, RuleSet, FieldValueRule, SaveActionRule, Suppressions
 └── rules/               one example rule: surrounding-whitespace
 ```
 
 A `FieldValueRule` only states what a field value should be; a `SaveActionRule` runs one of JabRef's Save Actions as a rule, with an id like `pages-normalize-page-numbers`.
+A comment above an entry switches rules off for it, for one field or for all of them:
+
+```bibtex
+% jabfix-disable surrounding-whitespace author:page-ranges
+@Article{knuth1984,
+  ...
+}
+```
+
 The CLI lives in JabKit: `jabkit jabfix [--check | --in-place] [--disable RULE,...] FILE`.
 Rules run once each, in `RuleSet` order, and must be idempotent.
 Layout is normalized by `BibDatabaseWriter`, so a library JabFix has already formatted produces no diff.

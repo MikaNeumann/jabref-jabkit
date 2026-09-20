@@ -8,6 +8,7 @@ import java.util.List;
 import org.jabref.jabfix.rule.Finding;
 import org.jabref.jabfix.rule.Rule;
 import org.jabref.jabfix.rule.RuleSet;
+import org.jabref.jabfix.rule.Suppressions;
 import org.jabref.logic.bibtex.FieldPreferences;
 import org.jabref.logic.citationkeypattern.CitationKeyPatternPreferences;
 import org.jabref.logic.exporter.BibDatabaseWriter;
@@ -62,12 +63,19 @@ public class JabFix {
     /// is therefore only ever run once over an entry -- see [Rule] for the contract that makes a
     /// second pass unnecessary.
     ///
+    /// What the magic comments above an entry switch off ([Suppressions]) is dropped before the
+    /// repairs are applied, so a suppressed finding is neither reported nor repaired. A rule that
+    /// is switched off for one field only still runs on the rest of the entry.
+    ///
     /// @return the findings and the resulting `.bib` content
     public JabFixResult run(BibDatabaseContext databaseContext) throws IOException {
         List<Finding> findings = new ArrayList<>();
         for (BibEntry entry : databaseContext.getEntries()) {
+            Suppressions suppressions = Suppressions.in(entry);
             for (Rule rule : ruleSet.rules()) {
-                List<Finding> reported = rule.scan(entry);
+                List<Finding> reported = rule.scan(entry).stream()
+                                             .filter(finding -> !suppressions.suppresses(rule.id(), finding.field()))
+                                             .toList();
                 for (Finding finding : reported) {
                     finding.fix().ifPresent(fix -> fix.applyTo(entry));
                 }
