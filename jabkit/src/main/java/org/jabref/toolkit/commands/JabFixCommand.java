@@ -8,13 +8,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.jabref.jabfix.JabFix;
-import org.jabref.jabfix.JabFixResult;
-import org.jabref.jabfix.rule.Finding;
-import org.jabref.jabfix.rule.RuleSet;
-import org.jabref.jabfix.rule.UnknownRuleException;
 import org.jabref.logic.importer.ParserResult;
 import org.jabref.logic.l10n.Localization;
+import org.jabref.logic.lint.JabFix;
+import org.jabref.logic.lint.JabFixResult;
+import org.jabref.logic.lint.rule.Finding;
+import org.jabref.logic.lint.rule.RuleSet;
+import org.jabref.logic.lint.rule.UnknownRuleException;
 import org.jabref.model.entry.field.Field;
 import org.jabref.toolkit.exception.CliException;
 import org.jabref.toolkit.exception.ImportServiceException;
@@ -30,7 +30,7 @@ import static picocli.CommandLine.Mixin;
 import static picocli.CommandLine.Option;
 import static picocli.CommandLine.ParentCommand;
 
-/// Thin CLI wrapper around [JabFix]; the rules and the formatting live in the `org.jabref.jabfix` module.
+/// Thin CLI wrapper around [JabFix]; the rules and the formatting live in the `org.jabref.logic.lint` package.
 ///
 /// Exit codes follow the other checking commands: 0 = nothing to do, 1 = the library is not clean
 /// (`--check` only), 2/3 = error.

@@ -1,18 +1,18 @@
-package org.jabref.jabfix;
+package org.jabref.logic.lint;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jabref.jabfix.rule.Finding;
-import org.jabref.jabfix.rule.Rule;
-import org.jabref.jabfix.rule.RuleSet;
 import org.jabref.logic.bibtex.FieldPreferences;
 import org.jabref.logic.citationkeypattern.CitationKeyPatternPreferences;
 import org.jabref.logic.exporter.BibDatabaseWriter;
 import org.jabref.logic.exporter.BibWriter;
 import org.jabref.logic.exporter.SelfContainedSaveConfiguration;
+import org.jabref.logic.lint.rule.Finding;
+import org.jabref.logic.lint.rule.Rule;
+import org.jabref.logic.lint.rule.RuleSet;
 import org.jabref.model.database.BibDatabaseContext;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.BibEntryTypesManager;

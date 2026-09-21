@@ -1,6 +1,6 @@
-package org.jabref.jabfix.rules;
+package org.jabref.logic.lint.rules;
 
-import org.jabref.jabfix.rule.FieldValueRule;
+import org.jabref.logic.lint.rule.FieldValueRule;
 
 import org.jspecify.annotations.NullMarked;
 

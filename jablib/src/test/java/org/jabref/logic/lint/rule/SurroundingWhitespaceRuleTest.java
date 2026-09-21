@@ -1,8 +1,8 @@
-package org.jabref.jabfix.rule;
+package org.jabref.logic.lint.rule;
 
 import java.util.List;
 
-import org.jabref.jabfix.rules.SurroundingWhitespaceRule;
+import org.jabref.logic.lint.rules.SurroundingWhitespaceRule;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.field.StandardField;
 import org.jabref.model.entry.types.StandardEntryType;

@@ -1,8 +1,8 @@
-package org.jabref.jabfix;
+package org.jabref.logic.lint;
 
 import java.util.List;
 
-import org.jabref.jabfix.rule.Finding;
+import org.jabref.logic.lint.rule.Finding;
 
 import org.jspecify.annotations.NullMarked;
 
