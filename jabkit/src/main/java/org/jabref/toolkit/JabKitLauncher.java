@@ -13,13 +13,13 @@ import java.util.stream.Collectors;
 
 import javafx.util.Pair;
 
-import org.jabref.jabfix.rule.RuleSet;
 import org.jabref.logic.importer.SearchBasedFetcher;
 import org.jabref.logic.importer.WebFetcher;
 import org.jabref.logic.importer.WebFetchers;
 import org.jabref.logic.journals.JournalAbbreviationLoader;
 import org.jabref.logic.journals.JournalAbbreviationRepository;
 import org.jabref.logic.l10n.Localization;
+import org.jabref.logic.lint.rule.RuleSet;
 import org.jabref.logic.net.ProxyAuthenticator;
 import org.jabref.logic.net.ProxyPreferences;
 import org.jabref.logic.net.ProxyRegisterer;

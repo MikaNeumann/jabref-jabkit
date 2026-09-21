@@ -1,4 +1,4 @@
-package org.jabref.jabfix.rule;
+package org.jabref.logic.lint.rule;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +28,7 @@ import org.jspecify.annotations.NullMarked;
 /// entry that has no such field is a typo in all but name.
 ///
 /// The rule is not one of [RuleSet#all]: it needs the ids of the run it belongs to, which
-/// [org.jabref.jabfix.JabFix] hands it. Its own id counts as known, so `% jabfix-disable
+/// [org.jabref.logic.lint.JabFix] hands it. Its own id counts as known, so `% jabfix-disable
 /// magic-comment` silences it where a comment is meant as it is written.
 @NullMarked
 public class MagicCommentRule implements Rule {

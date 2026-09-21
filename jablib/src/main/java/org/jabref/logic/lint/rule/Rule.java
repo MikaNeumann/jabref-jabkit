@@ -1,4 +1,4 @@
-package org.jabref.jabfix.rule;
+package org.jabref.logic.lint.rule;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import org.jspecify.annotations.NullMarked;
 ///
 /// Rules run as a pipeline, in the order of the [RuleSet], each seeing what the rules before it
 /// left behind. A rule must be idempotent with respect to its own output -- scanning a value it has
-/// already repaired must report nothing -- which is what lets [org.jabref.jabfix.JabFix] run every
+/// already repaired must report nothing -- which is what lets [org.jabref.logic.lint.JabFix] run every
 /// rule exactly once instead of iterating to a fixed point.
 @NullMarked
 public interface Rule {

@@ -1,10 +1,10 @@
-package org.jabref.jabfix.rule;
+package org.jabref.logic.lint.rule;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.jabref.jabfix.rules.SurroundingWhitespaceRule;
+import org.jabref.logic.lint.rules.SurroundingWhitespaceRule;
 
 import org.jspecify.annotations.NullMarked;
 

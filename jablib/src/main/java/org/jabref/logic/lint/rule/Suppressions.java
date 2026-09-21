@@ -1,4 +1,4 @@
-package org.jabref.jabfix.rule;
+package org.jabref.logic.lint.rule;
 
 import java.util.HashSet;
 import java.util.List;

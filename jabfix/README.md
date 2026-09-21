@@ -33,7 +33,7 @@ Still missing:
 ## Structure
 
 ```text
-jabfix/src/main/java/org/jabref/jabfix/
+jablib/src/main/java/org/jabref/logic/lint/
 ├── JabFix.java          runs a RuleSet over a library, serializes with BibDatabaseWriter
 ├── JabFixResult.java    findings + formatted library
 ├── rule/                API: Rule, Finding, Fix, RuleSet, FieldValueRule, SaveActionRule, Suppressions
