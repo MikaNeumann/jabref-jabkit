@@ -19,6 +19,7 @@ import org.jabref.logic.importer.WebFetchers;
 import org.jabref.logic.journals.JournalAbbreviationLoader;
 import org.jabref.logic.journals.JournalAbbreviationRepository;
 import org.jabref.logic.l10n.Localization;
+import org.jabref.logic.lint.rule.RuleSet;
 import org.jabref.logic.net.ProxyAuthenticator;
 import org.jabref.logic.net.ProxyPreferences;
 import org.jabref.logic.net.ProxyRegisterer;
@@ -153,6 +154,15 @@ public class JabKitLauncher {
                                      .map(WebFetcher::getName)
                                      .filter(name -> !"Search pre-configured".equals(name))
                                      .collect(Collectors.joining(", ")));
+
+        // `jabfix` is configured by rule id, so the ids -- and what each one does -- have to be
+        // discoverable from `--help` alone.
+        commandLine.getSubcommands().get("jabfix")
+                   .getCommandSpec().usageMessage().footer("\n"
+                           + Localization.lang("The following rules are available:") + "\n"
+                           + StringUtil.alignStringTable(RuleSet.all().rules().stream()
+                                                                .map(rule -> new Pair<>(rule.id(), rule.description()))
+                                                                .toList()));
     }
 
     private static boolean hasCommandOption(CommandLine.Model.CommandSpec commandSpec, String optionName) {
