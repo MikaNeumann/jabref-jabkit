@@ -1,5 +1,8 @@
 package org.jabref.toolkit.commands;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.jabref.logic.bibtex.FieldPreferences;
@@ -7,6 +10,7 @@ import org.jabref.toolkit.exception.CliExceptionHandler;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,7 +31,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
 
     @Test
     void everyRuleRunsByDefault() {
-        assertEquals(CommandLine.ExitCode.OK, commandLine.executeToLog("jabfix", inputFile));
+        assertEquals(CommandLine.ExitCode.OK, commandLine.executeToLog("fix", inputFile));
 
         String formatted = commandLine.getStandardOutput();
         assertTrue(formatted.contains("author = {Knuth, Donald E.},"), formatted);
@@ -36,7 +40,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
     @Test
     void disableSwitchesARuleOff() {
         assertEquals(CommandLine.ExitCode.OK,
-                commandLine.executeToLog("jabfix", "--disable", "surrounding-whitespace", inputFile));
+                commandLine.executeToLog("fix", "--disable", "surrounding-whitespace", inputFile));
 
         String formatted = commandLine.getStandardOutput();
         assertTrue(formatted.contains("author = { Knuth, Donald E. },"), formatted);
@@ -46,7 +50,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
     @Test
     void disableTakesACommaSeparatedList() {
         assertEquals(CommandLine.ExitCode.USAGE,
-                commandLine.executeToLog("jabfix", "--disable", "surrounding-whitespace,surounding-whitespace", inputFile));
+                commandLine.executeToLog("fix", "--disable", "surrounding-whitespace,surounding-whitespace", inputFile));
 
         String errors = commandLine.getErrorOutput();
         assertTrue(errors.contains("Unknown rule: surounding-whitespace."), errors);
@@ -57,7 +61,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
     @Test
     void anIdThatNamesNoRuleIsAUsageError() {
         assertEquals(CommandLine.ExitCode.USAGE,
-                commandLine.executeToLog("jabfix", "--disable", "surounding-whitespace", inputFile));
+                commandLine.executeToLog("fix", "--disable", "surounding-whitespace", inputFile));
 
         String errors = commandLine.getErrorOutput();
         assertTrue(errors.contains("surounding-whitespace"), errors);
@@ -66,15 +70,32 @@ class JabFixCommandTest extends AbstractJabKitTest {
 
     @Test
     void checkNamesTheRuleBehindEveryFinding() {
-        assertEquals(1, commandLine.executeToLog("jabfix", "--check", "-p", inputFile));
+        assertEquals(1, commandLine.executeToLog("fix", "--check", "-p", inputFile));
 
         String findings = commandLine.getStandardOutput();
         assertTrue(findings.contains("[surrounding-whitespace]"), findings);
     }
 
+    /// A magic comment naming no rule switches nothing off, so the check says so instead of letting
+    /// the entry be repaired as if the comment were not there.
+    @Test
+    void checkReportsAMagicCommentThatNamesNoRule(@TempDir Path tempDir) throws IOException {
+        Path library = Files.writeString(tempDir.resolve("typo.bib"), """
+                % jabref-format-ignore surounding-whitespace
+                @Article{key,
+                  author = {Doe, Jane},
+                }
+                """);
+
+        assertEquals(1, commandLine.executeToLog("fix", "--check", "-p", library.toString()));
+
+        String findings = commandLine.getStandardOutput();
+        assertTrue(findings.contains("[magic-comment]"), findings);
+    }
+
     @Test
     void inPlaceAndCheckCannotBeCombined() {
         assertEquals(CommandLine.ExitCode.USAGE,
-                commandLine.executeToLog("jabfix", "--in-place", "--check", inputFile));
+                commandLine.executeToLog("fix", "--in-place", "--check", inputFile));
     }
 }

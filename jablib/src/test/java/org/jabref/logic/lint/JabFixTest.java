@@ -3,15 +3,21 @@ package org.jabref.logic.lint;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jabref.logic.bibtex.FieldPreferences;
 import org.jabref.logic.citationkeypattern.CitationKeyPatternPreferences;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.logic.importer.fileformat.BibtexParser;
 import org.jabref.logic.lint.rule.Finding;
+import org.jabref.logic.lint.rule.Rule;
 import org.jabref.logic.lint.rule.RuleSet;
 import org.jabref.model.database.BibDatabaseContext;
+import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.BibEntryTypesManager;
+import org.jabref.model.entry.field.InternalField;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +29,28 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class JabFixTest {
+
+    /// Reports every field of an entry, so that a magic comment naming one field can be told apart
+    /// from one naming the rule as a whole.
+    private static final Rule EVERY_FIELD = new Rule() {
+        @Override
+        public String id() {
+            return "every-field";
+        }
+
+        @Override
+        public String description() {
+            return "Reports every field of an entry.";
+        }
+
+        @Override
+        public List<Finding> scan(BibEntry entry) {
+            return entry.getFields().stream()
+                        .filter(field -> field != InternalField.KEY_FIELD)
+                        .map(field -> new Finding(this, entry, Optional.of(field), "reported", Optional.empty()))
+                        .toList();
+        }
+    };
 
     private static final String SLOPPY = """
             @ARTICLE{key,
@@ -85,6 +113,128 @@ class JabFixTest {
                   year   = {2024},
                 }
                 """, run(RuleSet.of(), SLOPPY).formatted());
+    }
+
+    /// A magic comment above an entry switches the rule off for it, so nothing is reported and
+    /// nothing repaired, while the writer still normalizes the serialization.
+    @Test
+    void aMagicCommentSwitchesARuleOffForItsEntry() throws IOException {
+        JabFixResult result = run(RuleSet.all(), """
+                % jabref-format-ignore surrounding-whitespace
+                @ARTICLE{key,
+                author = " Doe, Jane ",
+                    YEAR="2024"
+                }
+                """);
+
+        assertEquals("""
+                % jabref-format-ignore surrounding-whitespace
+                @Article{key,
+                  author = { Doe, Jane },
+                  year   = {2024},
+                }
+                """, result.formatted());
+        assertEquals(List.of(), result.findings());
+    }
+
+    /// `field:rule` covers that one field, and leaves the rest of the entry to the rule.
+    @Test
+    void aFieldScopedMagicCommentLeavesTheOtherFieldsToTheRule() throws IOException {
+        JabFixResult result = run(RuleSet.of(EVERY_FIELD), """
+                % jabref-format-ignore author:every-field
+                @ARTICLE{key,
+                author = " Doe, Jane ",
+                title = " A Title "
+                }
+                """);
+
+        assertEquals(Set.of("title"),
+                result.findings().stream().map(finding -> finding.field().orElseThrow().getName()).collect(Collectors.toSet()));
+    }
+
+    @Test
+    void aMagicCommentCoversTheFieldsItListsAndTheOnesItsRegexMatches() throws IOException {
+        JabFixResult result = run(RuleSet.of(EVERY_FIELD), """
+                % jabref-format-ignore year,/.*title/:every-field
+                @ARTICLE{key,
+                author = "Doe, Jane",
+                title = "A Title",
+                booktitle = "A Book",
+                year = "2024"
+                }
+                """);
+
+        assertEquals(Set.of("author"),
+                result.findings().stream().map(finding -> finding.field().orElseThrow().getName()).collect(Collectors.toSet()));
+    }
+
+    /// BibTeX allows a colon in a field name, where the magic comment otherwise separates fields from rules.
+    @Test
+    void aMagicCommentNamesAFieldWhoseNameContainsAColon() throws IOException {
+        JabFixResult result = run(RuleSet.of(EVERY_FIELD), """
+                % jabref-format-ignore note:de:every-field
+                @ARTICLE{key,
+                author = "Doe, Jane",
+                note:de = "eine Notiz"
+                }
+                """);
+
+        assertEquals(Set.of("author"),
+                result.findings().stream().map(finding -> finding.field().orElseThrow().getName()).collect(Collectors.toSet()));
+    }
+
+    /// The writer trims every field of an entry that a rule changed, which a magic comment cannot
+    /// switch off: only what the rules themselves do is suppressed.
+    @Test
+    void theWriterTrimsEvenASuppressedField() throws IOException {
+        JabFixResult result = run(RuleSet.all(), """
+                % jabref-format-ignore author:surrounding-whitespace
+                @ARTICLE{key,
+                author = " Doe, Jane ",
+                title = " A Title "
+                }
+                """);
+
+        assertEquals("""
+                % jabref-format-ignore author:surrounding-whitespace
+                @Article{key,
+                  author = {Doe, Jane},
+                  title  = {A Title},
+                }
+                """, result.formatted());
+        assertEquals(List.of("title"),
+                result.findings().stream().map(finding -> finding.field().orElseThrow().getName()).toList());
+    }
+
+    /// A comment naming no rule of the run switches nothing off, which is reported rather than
+    /// passed over: the entry is repaired as if the comment were not there.
+    @Test
+    void aMagicCommentThatNamesNoRuleIsReported() throws IOException {
+        JabFixResult result = run(RuleSet.all(), """
+                % jabref-format-ignore surounding-whitespace
+                @ARTICLE{key,
+                author = " Doe, Jane ",
+                    YEAR="2024"
+                }
+                """);
+
+        assertEquals(List.of("magic-comment", "surrounding-whitespace"),
+                result.findings().stream().map(finding -> finding.rule().id()).toList());
+        assertTrue(result.formatted().contains("author = {Doe, Jane},"), result.formatted());
+    }
+
+    @Test
+    void aMagicCommentCanSwitchOffTheReportAboutItself() throws IOException {
+        JabFixResult result = run(RuleSet.all(), """
+                % jabref-format-ignore surounding-whitespace magic-comment
+                @ARTICLE{key,
+                author = " Doe, Jane ",
+                    YEAR="2024"
+                }
+                """);
+
+        assertEquals(List.of("surrounding-whitespace"),
+                result.findings().stream().map(finding -> finding.rule().id()).toList());
     }
 
     /// Parses `bibtex` and runs JabFix over it, normalizing the line separator so that the expected
