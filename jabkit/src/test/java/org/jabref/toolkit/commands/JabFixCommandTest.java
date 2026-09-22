@@ -31,7 +31,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
 
     @Test
     void everyRuleRunsByDefault() {
-        assertEquals(CommandLine.ExitCode.OK, commandLine.executeToLog("jabfix", inputFile));
+        assertEquals(CommandLine.ExitCode.OK, commandLine.executeToLog("fix", inputFile));
 
         String formatted = commandLine.getStandardOutput();
         assertTrue(formatted.contains("author = {Knuth, Donald E.},"), formatted);
@@ -40,7 +40,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
     @Test
     void disableSwitchesARuleOff() {
         assertEquals(CommandLine.ExitCode.OK,
-                commandLine.executeToLog("jabfix", "--disable", "surrounding-whitespace", inputFile));
+                commandLine.executeToLog("fix", "--disable", "surrounding-whitespace", inputFile));
 
         String formatted = commandLine.getStandardOutput();
         assertTrue(formatted.contains("author = { Knuth, Donald E. },"), formatted);
@@ -50,7 +50,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
     @Test
     void disableTakesACommaSeparatedList() {
         assertEquals(CommandLine.ExitCode.USAGE,
-                commandLine.executeToLog("jabfix", "--disable", "surrounding-whitespace,surounding-whitespace", inputFile));
+                commandLine.executeToLog("fix", "--disable", "surrounding-whitespace,surounding-whitespace", inputFile));
 
         String errors = commandLine.getErrorOutput();
         assertTrue(errors.contains("Unknown rule: surounding-whitespace."), errors);
@@ -61,7 +61,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
     @Test
     void anIdThatNamesNoRuleIsAUsageError() {
         assertEquals(CommandLine.ExitCode.USAGE,
-                commandLine.executeToLog("jabfix", "--disable", "surounding-whitespace", inputFile));
+                commandLine.executeToLog("fix", "--disable", "surounding-whitespace", inputFile));
 
         String errors = commandLine.getErrorOutput();
         assertTrue(errors.contains("surounding-whitespace"), errors);
@@ -70,7 +70,7 @@ class JabFixCommandTest extends AbstractJabKitTest {
 
     @Test
     void checkNamesTheRuleBehindEveryFinding() {
-        assertEquals(1, commandLine.executeToLog("jabfix", "--check", "-p", inputFile));
+        assertEquals(1, commandLine.executeToLog("fix", "--check", "-p", inputFile));
 
         String findings = commandLine.getStandardOutput();
         assertTrue(findings.contains("[surrounding-whitespace]"), findings);
@@ -81,13 +81,13 @@ class JabFixCommandTest extends AbstractJabKitTest {
     @Test
     void checkReportsAMagicCommentThatNamesNoRule(@TempDir Path tempDir) throws IOException {
         Path library = Files.writeString(tempDir.resolve("typo.bib"), """
-                % jabfix-disable surounding-whitespace
+                % jabref-format-ignore surounding-whitespace
                 @Article{key,
                   author = {Doe, Jane},
                 }
                 """);
 
-        assertEquals(1, commandLine.executeToLog("jabfix", "--check", "-p", library.toString()));
+        assertEquals(1, commandLine.executeToLog("fix", "--check", "-p", library.toString()));
 
         String findings = commandLine.getStandardOutput();
         assertTrue(findings.contains("[magic-comment]"), findings);
@@ -96,6 +96,6 @@ class JabFixCommandTest extends AbstractJabKitTest {
     @Test
     void inPlaceAndCheckCannotBeCombined() {
         assertEquals(CommandLine.ExitCode.USAGE,
-                commandLine.executeToLog("jabfix", "--in-place", "--check", inputFile));
+                commandLine.executeToLog("fix", "--in-place", "--check", inputFile));
     }
 }

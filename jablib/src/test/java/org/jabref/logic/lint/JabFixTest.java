@@ -120,7 +120,7 @@ class JabFixTest {
     @Test
     void aMagicCommentSwitchesARuleOffForItsEntry() throws IOException {
         JabFixResult result = run(RuleSet.all(), """
-                % jabfix-disable surrounding-whitespace
+                % jabref-format-ignore surrounding-whitespace
                 @ARTICLE{key,
                 author = " Doe, Jane ",
                     YEAR="2024"
@@ -128,7 +128,7 @@ class JabFixTest {
                 """);
 
         assertEquals("""
-                % jabfix-disable surrounding-whitespace
+                % jabref-format-ignore surrounding-whitespace
                 @Article{key,
                   author = { Doe, Jane },
                   year   = {2024},
@@ -141,7 +141,7 @@ class JabFixTest {
     @Test
     void aFieldScopedMagicCommentLeavesTheOtherFieldsToTheRule() throws IOException {
         JabFixResult result = run(RuleSet.of(EVERY_FIELD), """
-                % jabfix-disable author:every-field
+                % jabref-format-ignore author:every-field
                 @ARTICLE{key,
                 author = " Doe, Jane ",
                 title = " A Title "
@@ -152,12 +152,43 @@ class JabFixTest {
                 result.findings().stream().map(finding -> finding.field().orElseThrow().getName()).collect(Collectors.toSet()));
     }
 
+    @Test
+    void aMagicCommentCoversTheFieldsItListsAndTheOnesItsRegexMatches() throws IOException {
+        JabFixResult result = run(RuleSet.of(EVERY_FIELD), """
+                % jabref-format-ignore year,/.*title/:every-field
+                @ARTICLE{key,
+                author = "Doe, Jane",
+                title = "A Title",
+                booktitle = "A Book",
+                year = "2024"
+                }
+                """);
+
+        assertEquals(Set.of("author"),
+                result.findings().stream().map(finding -> finding.field().orElseThrow().getName()).collect(Collectors.toSet()));
+    }
+
+    /// BibTeX allows a colon in a field name, where the magic comment otherwise separates fields from rules.
+    @Test
+    void aMagicCommentNamesAFieldWhoseNameContainsAColon() throws IOException {
+        JabFixResult result = run(RuleSet.of(EVERY_FIELD), """
+                % jabref-format-ignore note:de:every-field
+                @ARTICLE{key,
+                author = "Doe, Jane",
+                note:de = "eine Notiz"
+                }
+                """);
+
+        assertEquals(Set.of("author"),
+                result.findings().stream().map(finding -> finding.field().orElseThrow().getName()).collect(Collectors.toSet()));
+    }
+
     /// The writer trims every field of an entry that a rule changed, which a magic comment cannot
     /// switch off: only what the rules themselves do is suppressed.
     @Test
     void theWriterTrimsEvenASuppressedField() throws IOException {
         JabFixResult result = run(RuleSet.all(), """
-                % jabfix-disable author:surrounding-whitespace
+                % jabref-format-ignore author:surrounding-whitespace
                 @ARTICLE{key,
                 author = " Doe, Jane ",
                 title = " A Title "
@@ -165,7 +196,7 @@ class JabFixTest {
                 """);
 
         assertEquals("""
-                % jabfix-disable author:surrounding-whitespace
+                % jabref-format-ignore author:surrounding-whitespace
                 @Article{key,
                   author = {Doe, Jane},
                   title  = {A Title},
@@ -180,7 +211,7 @@ class JabFixTest {
     @Test
     void aMagicCommentThatNamesNoRuleIsReported() throws IOException {
         JabFixResult result = run(RuleSet.all(), """
-                % jabfix-disable surounding-whitespace
+                % jabref-format-ignore surounding-whitespace
                 @ARTICLE{key,
                 author = " Doe, Jane ",
                     YEAR="2024"
@@ -195,7 +226,7 @@ class JabFixTest {
     @Test
     void aMagicCommentCanSwitchOffTheReportAboutItself() throws IOException {
         JabFixResult result = run(RuleSet.all(), """
-                % jabfix-disable surounding-whitespace magic-comment
+                % jabref-format-ignore surounding-whitespace magic-comment
                 @ARTICLE{key,
                 author = " Doe, Jane ",
                     YEAR="2024"
